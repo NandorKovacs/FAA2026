@@ -140,7 +140,50 @@ notation A " ∆ " B => Set.symm_diff A B
   Prove the following theorem.
   You may only use the tactics stated at the start of the sheet.
 -/
+
+/-
+  We notice that (x ∈ A ∩ B ∆ C) implies
+    x ∈ A, and x ∈ B \ C ∪ C \ B
+
+  Furthermore, x ∈ A ⋃ B → x ∈ A ∨ x ∈ B, for all A and B
+
+  therefore, we get:
+  x ∈ B \ C ∨ x ∈ C \ B, and we want to show x ∈ (A ∩ B) \ (A ∩ C) ∨ x ∈ (A ∩ C) \ (A ∩ B)
+
+  We show following lemma:
+  Let x ∈ A, x ∈ B \ C. Then, x ∈ (A ∩ B) \ (A ∩ C)
+    x ∈ (A ∩ B) \ (A ∩ C) ↔ x ∈ A ∩ (B \ (A ∩ C))
+    As x ∈ A, we only have to show x ∈ (B \ (A ∩ C)), but
+    x ∈ (B \ (A ∩ C)) ↔ x ∈ (B \ A) ⋃ (B \ C)
+    however, by assumption, x ∈ B \ C, and therefore x is also in the union
+
+  Now, suppose X ∈ B \ C. Then, with this lemma, we get x ∈ (A ∩ B) \ (A ∩ C), and we are done
+  Otherwise, suppose x ∈ C \ B, which implies x ∈ (A ∩ C) \ (A ∩ B), and we are done.
+
+-/
 theorem Q2 (x : α) : x ∈ A ∩ (B ∆ C) → x ∈ (A ∩ B) ∆ (A ∩ C) := by
+  unfold symm_diff
+  intro h
+  obtain ⟨xa, xsym⟩ := h
+  rw [mem_union]
+  rw [mem_union] at xsym
+  let ll (X Y Z : Set α) : x ∈ X → x ∈ Y \ Z → x ∈ (X ∩ Y) \ (X ∩ Z)
+  · intro xx xyz
+    rw [inter_sdiff_assoc]
+    constructor
+    assumption
+    rw [sdiff_inter]
+    right
+    assumption
+  cases xsym <;> expose_names
+  · left
+    apply ll
+    assumption
+    assumption
+  right
+  apply ll
+  assumption
+  assumption
 
 
 
@@ -166,8 +209,58 @@ theorem Q2 (x : α) : x ∈ A ∩ (B ∆ C) → x ∈ (A ∩ B) ∆ (A ∩ C) :=
 #check Iff.mp
 #check Iff.mpr
 
+/-
+  We show the following lemma:
+    x ∈ (X ∆ Y) → x ∈ Xᶜ ∆ Yᶜ which is the same as x ∈ X \ Y ∪ Y \ X → Xᶜ \ Yᶜ ∪ Yᶜ \ Xᶜ
+    We use the following identities:
+      x ∈ A ⋃ B ↔ x ∈ A ∨ X ∈ B
+      x ∈ A \ B ↔ x ∈ A ∧ x ∉ B
+
+    By first using 1, then twice 2, on both sides of the implication, we get
+
+    x ∈ X ∧ x ∉ Y ∨ x ∈ Y ∧ x ∉ X → x ∈ Xᶜ ∧ x ∉ Yᶜ ∨ x ∈ Yᶜ ∧ x ∉ Xᶜ
+
+    By switching x ∉ A for x ∈ Aᶜ , and vice versa, we get
+
+    x ∈ X ∧ x ∉ Y ∨ x ∈ Y ∧ x ∉ X → x ∉ X ∧ x ∈ Y ∨ x ∉ Y ∧ x ∈ X
+
+    which is obviously true, which we see by reordering the terms
+
+  Proving (A ∆ B) = Aᶜ ∆ Bᶜ is the same as proving
+  x ∈ (A ∆ B) ↔ x ∈ Aᶜ ∆ Bᶜ
+
+  We show it for both sides:
+    x ∈ (A ∆ B) ∈ x ∈ Aᶜ ∆ Bᶜ is precisely what our helper lemma states
+
+    x ∈ (Aᶜ ∆ Bᶜ) → x ∈ A ∆ B is the same as
+    x ∈ (Aᶜ ∆ Bᶜ) → x ∈ Aᶜᶜ ∆ Bᶜᶜ, to which our lemma is applicable
+-/
+
 theorem Q3 : (A ∆ B) = Aᶜ ∆ Bᶜ := by
-  sorry
+  let elem_impl_one_side (X Y : Set α) (x : α) : x ∈ (X ∆ Y) → x ∈ Xᶜ ∆ Yᶜ
+  · intro h
+    unfold symm_diff at ⊢ h
+    rw [mem_union, mem_sdiff, mem_sdiff] at ⊢ h
+    rewrite [notMem_compl_iff]
+    rewrite [notMem_compl_iff]
+    rewrite [mem_compl_iff]
+    rewrite [mem_compl_iff]
+    cases h <;> expose_names <;> obtain ⟨hl, hr⟩ := h
+    · right
+      constructor
+      assumption
+      assumption
+    · left
+      constructor
+      assumption
+      assumption
+  ext
+  expose_names
+  constructor
+  · apply elem_impl_one_side
+  · rewrite (occs := .pos [2]) [<-compl_compl A]
+    rewrite (occs := .pos [2]) [<-compl_compl B]
+    apply elem_impl_one_side
 
 
 /-!
@@ -196,15 +289,46 @@ theorem symm_diff_assoc : ((A ∆ B) ∆ C) = (A ∆ (B ∆ C)) := by
   unfold symm_diff
   grind -- `grind` is a powerful tactic, but you are not allowed to use it yet
 
+/-
+  By simplifying with ∅ \ A = ∅, A \ ∅ = A, and ∅ ⋃ A = A, we easily conclude this result
+
+  (∅ ∆ A) = A
+  ∅ \ A ∪ A \ ∅ = A
+  ∅ ∪ A \ ∅ = A
+  ∅ ∪ A = A
+  A = A
+-/
 
 theorem Q4a : (∅ ∆ A) = A := by
-  sorry
+  unfold symm_diff
+  rw [sdiff_empty, empty_sdiff, empty_union]
 
+/-
+  By simplifying with A \ A = ∅, and ∅ ⋃ ∅ = ∅, we get
+
+  (A ∆ A) = ∅
+  A \ A ∪ A \ A = ∅
+  ∅ ∪ A \ A = ∅
+  ∅ ∪ ∅ = ∅
+  ∅ = ∅
+-/
 theorem Q4b : (A ∆ A) = ∅ := by
-  sorry
+  unfold symm_diff
+  rw [sdiff_self, empty_union]
+
+/-
+  We suspet that C should be A ∆ B.
+
+  We prove this:
+  (A ∆ (A ∆ B)) = ((A ∆ A) ∆ B) = (∅ ∆ B) = B, where we use symm_diff_assoc, Q4b and Q4a
+
+-/
 
 theorem Q4c : ∀ A : Set ℕ, ∀ B : Set ℕ, ∃ C : Set ℕ, (A ∆ C) = B := by
-  sorry
+  intro A B
+  use (A ∆ B)
+  rw [<-symm_diff_assoc, Q4b, Q4a]
+
 
 end Set
 
@@ -237,7 +361,21 @@ notation "O(" g ")" => BigO g
   Prove the following theorem.
   You may only use the tactics stated at the start of the sheet.
 -/
+
+/-
+  We set c = 1, and n₀ = 0.
+
+  All assumptions are trivially satisfied.
+-/
 theorem Q5 (g : ℕ → ℕ) : g ∈ O(g) := by
-  sorry
+  unfold BigO
+  unfold inBigO
+  rw [Set.mem_ofPred_eq]
+  use 1
+  constructor
+  · exact zero_lt_one
+  use 0
+  intro n h
+  rw [one_mul]
 
 end Asymptotics
