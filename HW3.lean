@@ -42,11 +42,7 @@ def sumPowersOfTwo : ℕ → ℕ
 
 theorem Q1 (n : ℕ) : (sumPowersOfTwo n) + 1 = 2 ^ n := by
   induction n
-  · simp [sumPowersOfTwo]
-  expose_names
-  unfold sumPowersOfTwo
-  omega
-
+  <;> (unfold sumPowersOfTwo ; omega)
 
 
 /-!
@@ -66,9 +62,6 @@ theorem Q2 (n : ℕ) : n ≥ 3 ↔ 2 * n + 2 ≤ 2^n := by
   induction n ; omega ; expose_names ; simp
   induction n ; omega ; expose_names ; simp
   induction n ; omega ; expose_names ; simp
-
-
-
 
 
 
