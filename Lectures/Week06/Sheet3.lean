@@ -18,6 +18,7 @@ structure Point where
   x : Nat
   y : Nat
 
+#check Point
 -- Point is the type; p is a value of that type.
 def p : Point := { x := 3, y := 4 }
 
@@ -51,4 +52,7 @@ def exampleArray2 : SortedArrayFun 5 := {
 -- In the proof, we can can obtain these assumption of this type directly
 example (n : ℕ) (a : SortedArrayFun n)
     (i j : ℕ) (hij : i ≤ j) :
-    a.get i ≤ a.get j := by sorry
+    a.get i ≤ a.get j := by
+    have: Monotone a.get := by exact a.sorted
+    simp [Monotone] at this
+    simp_all

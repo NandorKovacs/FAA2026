@@ -6,7 +6,7 @@ Authors: Sorrachai Yingchareonthawornchai
 
 import Mathlib.Tactic
 import Lectures.Week06.API
-import Waterfall
+import waterfall
 
 set_option autoImplicit false
 set_option tactic.hygienic false
@@ -32,7 +32,7 @@ theorem sorted_merge (l1 l2 : List ℕ) (hxs : Sorted l1) (hys : Sorted l2) : So
   fun_induction Merge
   · assumption
   · assumption
-  · apply Sorted.cons_min
+  ·.apply Sorted.cons_min
     · apply sorted_min at hxs
       apply sorted_min at hys
       suffices x.MinOfList (y::ys) by

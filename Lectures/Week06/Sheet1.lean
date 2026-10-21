@@ -66,4 +66,11 @@ theorem sorted_merge (l1 l2 : List ℕ) (hxs : Sorted l1) (hys : Sorted l2) : So
 #check MergeSort.induct
 
 -- Exercise 1.1: use sorted_merge theorem to prove that MergeSort outputs a sorted list
-theorem MS_Sorted (xs : List ℕ) : Sorted (MergeSort xs) := by sorry
+theorem MS_Sorted (xs : List ℕ) : Sorted (MergeSort xs) := by
+  fun_induction MergeSort
+  · cases x
+    · exact Sorted.nil
+    · simp_all only [List.length_cons, Order.lt_two_iff, add_le_iff_nonpos_left,
+      nonpos_iff_eq_zero, List.length_eq_zero_iff]
+      exact Sorted.single head
+  · exact sorted_merge l1' l2' ih2 ih1

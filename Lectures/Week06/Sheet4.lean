@@ -57,7 +57,9 @@ theorem subinterval_to_interval_qlt {n : ℕ} (arr : SortedArrayFun n) (q a mid 
     use i
     suffices i ≤ mid by grind
     replace hi: arr.get i = q := by grind
-    -- the rest of the proof follows from one important fact: _____
+    -- the rest of the proof follows from one important fact: Monotone arr.get
+    have: Monotone arr.get := by exact arr.sorted
+    simp [Monotone] at this
     sorry
   · -- easy direction
     intro h
@@ -77,7 +79,9 @@ lemma bs_aux_correctness (n q : ℕ) (arr : SortedArrayFun n) (a b : ℕ) (h_le 
       grind
     · -- go left
       rw [← ih1]
-      sorry
+      apply subinterval_to_interval_qlt
+      · sorry
+      · sorry
     · -- go right; symmetric case
       rw [← ih1]
       sorry
