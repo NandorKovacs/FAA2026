@@ -12,17 +12,13 @@ set_option tactic.hygienic false
 
 @[simp, grind] def Nat.MinOfList (a : ℕ) (t : List ℕ) : Prop := ∀ y ∈ t, a ≤ y
 
--- How do define inductively of sortedness
 
--- inductive predicate
 inductive Sorted : List ℕ → Prop
   | nil : Sorted []
   | single (a : ℕ) : Sorted [a]
   | cons (a b : ℕ) (t : List ℕ ) : a ≤ b → Sorted (b :: t) → Sorted (a :: b :: t)
   | cons_min (a :ℕ) (t : List ℕ) : a.MinOfList t → Sorted (t) →  Sorted (a :: t)
 
-
--- Consider the following inductive predicate
 inductive Sorted2 : List ℕ → Prop
   | nil : Sorted2 []
   | single (a : ℕ) : Sorted2 [a]
