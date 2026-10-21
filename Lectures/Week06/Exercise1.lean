@@ -48,3 +48,5 @@ lemma insert_into_sorted ( x : ℕ) (xs : List ℕ) (h : sorted xs) : sorted (in
 
 -- Let's prove that insertion sort is sorted.
 theorem IS_sorted (xs : List ℕ) : sorted (IS xs) := by sorry
+
+end mysorting
