@@ -272,9 +272,6 @@ lemma sorted_may_not_imply_bst : ∃ t : BinaryTree, Sorted (inorder t) ∧ ¬ I
     contradiction
 
 
-    -- cases bst_left
-
-
 /-!
   **Exercise 5**
 
@@ -302,7 +299,54 @@ def fromList : List ℕ → BinaryTree
 -- **(a)** Prove the following theorem.
 lemma mem_heapInsert (y : ℕ) (t : BinaryTree) :
     ∀ x : ℕ, y ∈ inorder (heapInsert x t) ↔ y = x ∨ y ∈ inorder t := by
-  sorry
+    intro x
+    induction t
+    · rw [inorder]
+      simp [heapInsert, inorder]
+    · simp [heapInsert, inorder]
+      split <;> expose_names
+      · rw [inorder]
+        rw [List.mem_append, List.mem_cons]
+        grw [right_ih]
+        tauto
+      · rw [inorder]
+        rw [List.mem_append, List.mem_cons]
+        by_cases hxy : x = value
+        · rw [<-hxy]
+          tauto
+        · simp_all
+          suffices h : y ∈ inorder (heapInsert value right) ↔ y = value ∨ y ∈ inorder right by sorry
+          by_cases hh : y = value
+          · rw [hh]
+            simp_all
+            induction right with
+            | nil => simp [inorder, heapInsert]
+            | node value left right left_ih right_ih =>
+              unfold heapInsert
+              split
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 -- **(b)** Prove the following theorem.
 theorem heapInsert_isHeap {t : BinaryTree} (ht : IsHeap t) :
