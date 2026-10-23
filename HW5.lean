@@ -225,10 +225,6 @@ lemma sorted_append (x : ℕ) (l1 l2 : List ℕ) (h1 : Sorted l1) (h2 : Sorted l
       · rw [<-List.cons_append]
         assumption
 
-
-theorem isBST_lr {v : ℕ} {l r : BinaryTree} (ht : IsBST (BinaryTree.node v l r)) : IsBST l ∧ IsBST r := by
-  sorry
-
 /-!
   **Exercise 4**
 
@@ -241,33 +237,42 @@ theorem isBST_lr {v : ℕ} {l r : BinaryTree} (ht : IsBST (BinaryTree.node v l r
 -/
 -- **(a)** Prove the following theorem.
 theorem bst_has_sorted_inorder {t : BinaryTree} (ht : IsBST t) : Sorted (inorder t) := by
-  unfold inorder
-  split
-  · exact Sorted.nil
-  have (l : BinaryTree) : Sorted (inorder l) := by sorry
-  expose_names
-  have ⟨htl, htr⟩ := isBST_lr ht
-  · apply sorted_append
-
-    · simp_all
-    · simp_all
+  induction ht with
+  | nil =>
+    unfold inorder
+    exact Sorted.nil
+  | node value l r bst_left bst_right hleft hright bst_left_ih bst_right_ih =>
+    unfold inorder
+    apply sorted_append
+    · assumption
+    · assumption
     · unfold Nat.MaxOfList
-      unfold inorder
-      split
-      · simp
-      · intro y
-        simp
-        intro hy
-        obtain hyl | hym | hyr := hy
-        · rw [<-lookup_correct] at hyl
-          unfold lookup at hyl
-
-
-    · sorry
+      intro y hy
+      have hhy := hleft y hy
+      omega
+    · unfold Nat.MinOfList
+      intro y hy
+      have hhy := hright y hy
+      omega
 
 -- **(b)** Prove the following theorem.
 lemma sorted_may_not_imply_bst : ∃ t : BinaryTree, Sorted (inorder t) ∧ ¬ IsBST t := by
-  sorry
+  use BinaryTree.node 1 (BinaryTree.node 1 BinaryTree.nil BinaryTree.nil) BinaryTree.nil
+  constructor
+  · repeat unfold inorder
+    simp
+    apply Sorted.cons
+    · omega
+    · apply Sorted.single
+  · intro h
+    cases h
+    expose_names
+    have h : 1 ∈ inorder (BinaryTree.node 1 BinaryTree.nil BinaryTree.nil) := by simp [inorder]
+    have hh := hleft 1 h
+    contradiction
+
+
+    -- cases bst_left
 
 
 /-!
