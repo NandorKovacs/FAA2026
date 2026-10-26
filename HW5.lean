@@ -149,19 +149,6 @@ theorem lookup_correct (q : ℕ) {t : BinaryTree} (ht : IsBST t) :
           · right; assumption
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 /-!
   **Exercise 3**
 
@@ -299,66 +286,75 @@ def fromList : List ℕ → BinaryTree
 -- **(a)** Prove the following theorem.
 lemma mem_heapInsert (y : ℕ) (t : BinaryTree) :
     ∀ x : ℕ, y ∈ inorder (heapInsert x t) ↔ y = x ∨ y ∈ inorder t := by
+  induction t with
+  | nil =>
     intro x
-    induction t
-    · rw [inorder]
-      simp [heapInsert, inorder]
-    · simp [heapInsert, inorder]
-      split <;> expose_names
-      · rw [inorder]
-        rw [List.mem_append, List.mem_cons]
-        grw [right_ih]
-        tauto
-      · rw [inorder]
-        rw [List.mem_append, List.mem_cons]
-        by_cases hxy : x = value
-        · rw [<-hxy]
-          tauto
-        · simp_all
-          suffices h : y ∈ inorder (heapInsert value right) ↔ y = value ∨ y ∈ inorder right by sorry
-          by_cases hh : y = value
-          · rw [hh]
-            simp_all
-            induction right with
-            | nil => simp [inorder, heapInsert]
-            | node value left right left_ih right_ih =>
-              unfold heapInsert
-              split
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    simp [heapInsert, inorder]
+  | node value l r l_ih r_ih =>
+    intro x
+    unfold heapInsert
+    split
+    · simp [inorder, r_ih x]
+      tauto
+    · simp [inorder, r_ih value]
+      tauto
 
 -- **(b)** Prove the following theorem.
 theorem heapInsert_isHeap {t : BinaryTree} (ht : IsHeap t) :
     ∀ x : ℕ, IsHeap (heapInsert x t) := by
-  sorry
+  induction ht with
+  | nil =>
+    intro x
+    unfold heapInsert
+    apply IsHeap.node
+    · exact IsHeap.nil
+    · exact IsHeap.nil
+    · simp [inorder]
+    · simp [inorder]
+  | node value l r heap_left heap_right hleft hright l_ih r_ih =>
+    intro x
+    unfold heapInsert
+    split <;> expose_names
+    · apply IsHeap.node
+      · exact r_ih x
+      · assumption
+      · intro z hz
+        rw [mem_heapInsert] at hz
+        obtain hzx | hzr := hz
+        · omega
+        · exact hright z hzr
+      · exact hleft
+    · apply IsHeap.node
+      · exact r_ih value
+      · exact heap_left
+      · intro z hz
+        rw [mem_heapInsert] at hz
+        obtain hzv | hzr := hz
+        · omega
+        · have := hright z hzr
+          omega
+      · intro z hz
+        have := hleft z hz
+        omega
 
 -- **(c)** Prove the following theorem.
 theorem fromList_isHeap (xs : List ℕ) : IsHeap (fromList xs) := by
-  sorry
+  induction xs with
+  | nil =>
+    unfold fromList
+    exact IsHeap.nil
+  | cons x xs ih =>
+    unfold fromList
+    exact heapInsert_isHeap ih x
 
 -- **(d)** Prove the following theorem.
 theorem mem_fromList (y : ℕ) (xs : List ℕ) : y ∈ inorder (fromList xs) ↔ y ∈ xs := by
-  sorry
+  induction xs with
+  | nil =>
+    simp [fromList, inorder]
+  | cons x xs ih =>
+    unfold fromList
+    rw [mem_heapInsert, ih]
+    simp
 
 end HW5
