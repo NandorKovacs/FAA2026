@@ -60,7 +60,16 @@ theorem fastPow_eq_pow (a n : ℕ) : fastPow a n = a ^ n := by
   · expose_names
     rw [ih1]
     unfold square
-    rw [mul_zpow a a (x / 2)]
+    rw [<-pow_add]
+    congr
+    omega
+  · expose_names
+    rw [ih1]
+    unfold square
+    nth_rw 3 [<-pow_one a]
+    rw [<-pow_add, <-pow_add]
+    congr
+    omega
 
 
 /-
@@ -71,7 +80,22 @@ theorem fastPow_eq_pow (a n : ℕ) : fastPow a n = a ^ n := by
 
 -- **(b)** Prove the following theorem.
 theorem fastPowMuls_le (n : ℕ) : fastPowMuls n ≤ 2 * Nat.log 2 n := by
-  sorry
+  fun_induction fastPowMuls
+  · trivial
+  · trivial
+  case case3 _ _ _ _ ih =>
+    grw [ih]
+    rw [Nat.log_div_base]
+    simp
+    omega
+  case case4 x _ _ _ ih =>
+    grw [ih]
+    rw [Nat.log_div_base]
+    have h : (0 < Nat.log 2 x) := by
+      apply Nat.log_pos
+      · trivial
+      · omega
+    omega
 
 
 /-!
@@ -109,12 +133,28 @@ termination_by hi - lo
 -- **(a)** Prove the following theorem.
 theorem binSearch_true (p : ℕ → Prop) [DecidablePred p] (lo hi : ℕ) (h : p hi) :
     p (binSearch p lo hi) := by
-  sorry
+  fun_induction binSearch
+  case case1 pm ih =>
+    exact ih pm
+  case case2 ih =>
+    exact ih h
+  case case3 =>
+    trivial
 
 -- **(b)** Prove the following theorem.
 theorem binSearch_least (p : ℕ → Prop) [DecidablePred p] (hp : MonotonePred p)
     (lo hi k : ℕ) (hlo : lo ≤ k) (hk : k < binSearch p lo hi) : ¬p k := by
-  sorry
+  fun_induction binSearch
+  case case1 ih =>
+    exact ih hlo hk
+  case case2 mid _ ih =>
+    by_cases h :  mid + 1 ≤ k
+    · exact ih h hk
+    · by_contra
+      simp_all
+      have bad := hp k mid h this
+      contradiction
+  case case3 => omega
 
 
 /-!
@@ -140,11 +180,37 @@ def isqrt (n : ℕ) : ℕ := binSearch (fun k => n < (k + 1) * (k + 1)) 0 n
 
 -- **(a)** Prove the following theorem.
 theorem lt_isqrt_succ_mul_self (n : ℕ) : n < (isqrt n + 1) * (isqrt n + 1) := by
-  sorry
+  let p := fun k => n < (k + 1) * (k + 1)
+  have h := binSearch_true p 0 n (by nlinarith)
+  rw [<-isqrt] at h
+  exact h
 
 -- **(b)** Prove the following theorem.
 theorem isqrt_mul_self_le (n : ℕ) : isqrt n * isqrt n ≤ n := by
-  sorry
+  let p := fun k => n < (k + 1) * (k + 1)
+  have hmp : MonotonePred p := by
+    unfold MonotonePred
+    unfold p
+    intro i j hij hi
+    nlinarith
+
+  cases Nat.eq_zero_or_pos (isqrt n)
+  · simp_all
+  · have hbins : isqrt n - 1 < binSearch p 0 n := by
+      rw [<-isqrt]
+      omega
+
+    by_cases hlo : 0 ≤ isqrt n - 1
+    · have h := binSearch_least p hmp 0 n (isqrt n - 1) hlo hbins
+      unfold p at h
+      simp at h
+      rw [Nat.sub_one_add_one] at h
+      · assumption
+      · sorry
+    · simp_all
+
+
+
 
 
 /-!
