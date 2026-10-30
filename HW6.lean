@@ -268,11 +268,38 @@ decreasing_by
 
 -- **(a)** Prove the following theorem.
 theorem mem_quickSort (y : ℕ) (l : List ℕ) : y ∈ quickSort l ↔ y ∈ l := by
-  sorry
+  fun_induction quickSort
+  · rfl
+  · expose_names
+    rw [mem_lower] at ih2
+    rw [mem_upper] at ih1
+    simp [List.mem_append, List.mem_cons, ih1, ih2]
+    constructor
+    · tauto
+    · by_cases y < x
+      · tauto
+      · simp_all
 
 -- **(b)** Prove the following theorem.
 theorem quickSort_sorted (l : List ℕ) : Sorted (quickSort l) := by
-  sorry
+  fun_induction quickSort
+  · exact Sorted.nil
+  · apply sorted_append
+    · trivial
+    · trivial
+    · expose_names
+      unfold lower
+      unfold Nat.MaxOfList
+      intro y hy
+      rw [mem_quickSort] at hy
+      simp_all
+      omega
+    · expose_names
+      unfold upper
+      unfold Nat.MinOfList
+      intro y hy
+      rw [mem_quickSort] at hy
+      simp_all
 
 /-!
   **Exercise 5**
@@ -307,11 +334,33 @@ theorem peak_isPeak_of_invariant (f : ℕ → ℕ) (a b lo hi : ℕ)
     (hab : a ≤ lo) (hlh : lo ≤ hi) (hhb : hi ≤ b)
     (hlo : lo = a ∨ f (lo - 1) < f lo) (hhi : hi = b ∨ f (hi + 1) ≤ f hi) :
     IsPeak f a b (peak f lo hi) := by
-  sorry
+  fun_induction peak
+  · simp_all
+    expose_names
+    exact ih1 (by omega) (by omega)
+  · simp_all
+    expose_names
+    exact ih1 (by omega) (by omega)
+  · expose_names
+    unfold IsPeak
+    simp_all
+    constructor
+    · omega
+    · constructor
+      · omega
+      · have hh : lo = hi := by omega
+        rw [hh]
+        omega
 
 -- **(b)** Prove the following theorem.
 theorem peak_isPeak (f : ℕ → ℕ) (a b : ℕ) (hab : a ≤ b) : IsPeak f a b (peak f a b) := by
-  sorry
+  fun_induction peak
+  · expose_names
+    by_cases hmid : mid + 1 ≤ hi
+    · simp_all
+      unfold IsPeak at ih1
+      obtain ⟨ih1l, ih1r, ih1r2⟩ := ih1
+    · done
 
 -- **(c)** Prove the following theorem.
 theorem peak_eq_of_unimodal (f : ℕ → ℕ) (a b m : ℕ) (ham : a ≤ m) (hmb : m ≤ b)
