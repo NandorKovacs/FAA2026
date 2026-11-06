@@ -199,15 +199,12 @@ theorem isqrt_mul_self_le (n : ℕ) : isqrt n * isqrt n ≤ n := by
   · have hbins : isqrt n - 1 < binSearch p 0 n := by
       rw [<-isqrt]
       omega
-
-    by_cases hlo : 0 ≤ isqrt n - 1
-    · have h := binSearch_least p hmp 0 n (isqrt n - 1) hlo hbins
-      unfold p at h
-      simp at h
-      rw [Nat.sub_one_add_one] at h
-      · assumption
-      · sorry
-    · simp_all
+    have h := binSearch_least p hmp 0 n (isqrt n - 1) (by omega) hbins
+    unfold p at h
+    simp at h
+    rw [Nat.sub_one_add_one] at h
+    · assumption
+    · omega
 
 
 
@@ -354,19 +351,28 @@ theorem peak_isPeak_of_invariant (f : ℕ → ℕ) (a b lo hi : ℕ)
 
 -- **(b)** Prove the following theorem.
 theorem peak_isPeak (f : ℕ → ℕ) (a b : ℕ) (hab : a ≤ b) : IsPeak f a b (peak f a b) := by
-  fun_induction peak
-  · expose_names
-    by_cases hmid : mid + 1 ≤ hi
-    · simp_all
-      unfold IsPeak at ih1
-      obtain ⟨ih1l, ih1r, ih1r2⟩ := ih1
-    · done
+  apply peak_isPeak_of_invariant f a b a b (by omega) (by omega) (by omega) (by omega) (by omega)
 
 -- **(c)** Prove the following theorem.
 theorem peak_eq_of_unimodal (f : ℕ → ℕ) (a b m : ℕ) (ham : a ≤ m) (hmb : m ≤ b)
     (hinc : ∀ i, a ≤ i → i < m → f i < f (i + 1))
     (hdec : ∀ i, m ≤ i → i < b → f (i + 1) < f i) :
     peak f a b = m := by
-  sorry
+  fun_induction peak <;> simp_all <;> expose_names
+  · by_cases hmid : mid < m
+    · have hlo_lt_mid : (lo ≤ mid) := by omega
+      grw [hlo_lt_mid] at hinc
+      exact ih1 hmid (fun i hi => hinc i hi.le)
+    · simp at hmid
+      have hdec_m := hdec mid hmid (by omega)
+      omega
+  · by_cases hmid : m ≤ mid
+    · have hmid_le_hi : mid ≤ hi := by omega
+      grw [hmid_le_hi] at ih1
+      exact ih1 hmid hdec
+    · simp at hmid
+      have hinc_m := hinc mid (by omega) hmid
+      omega
+  · omega
 
 end HW6

@@ -86,12 +86,12 @@ def bstFindT (q : ℕ) : BinaryTree → TimeM ℕ Bool
 lemma mem_inorder_node_of_lt {q x : ℕ} {l r : BinaryTree}
     (ht : IsBST (.node x l r)) (hq : q < x) :
     q ∈ inorder (.node x l r) ↔ q ∈ inorder l := by
-  sorry
+  waterfall
 
 lemma mem_inorder_node_of_gt {q x : ℕ} {l r : BinaryTree}
     (ht : IsBST (.node x l r)) (hq : x < q) :
     q ∈ inorder (.node x l r) ↔ q ∈ inorder r := by
-  sorry
+  waterfall
 
 /-!
   **Task (b)**: Prove the following two theorems about
@@ -99,11 +99,11 @@ lemma mem_inorder_node_of_gt {q x : ℕ} {l r : BinaryTree}
 -/
 theorem bstFindT_correct (q : ℕ) (t : BinaryTree) (ht : IsBST t) :
     (bstFindT q t).ret = true ↔ q ∈ inorder t := by
-  sorry
+  induction t <;> waterfall
 
 theorem bstFindT_time (q : ℕ) (t : BinaryTree) :
     (bstFindT q t).time ≤ t.height := by
-  sorry
+  waterfall
 
 
 /-!
@@ -158,7 +158,14 @@ def MatchSet (r : RegEx α) : Set (List α) := { w | r.Matches w }
 -/
 lemma matchEpsilon_eq_true_iff (r : RegEx α) :
     r.matchEpsilon = true ↔ r.Matches [] := by
-  sorry
+  induction r
+  · grind [Matches, matchEpsilon]
+  · grind [Matches, matchEpsilon]
+  · grind [Matches, matchEpsilon]
+  · waterfall [Matches, matchEpsilon]
+  · simp [Matches, matchEpsilon]
+    use []
+    grind
 
 
 /-- Timed implementation of `matchEpsilon`. -/
@@ -193,7 +200,8 @@ theorem matchEpsilonT_time {α : Type} (r : RegEx α) :
   The *second* subtask must be proven using **only** `rw`.
 -/
 lemma matchEpsilonT_time5 {α : Type} : ∃ r : RegEx α, (matchEpsilonT r).time = 5 := by
-  sorry
+  use .concat .epsilon (.concat .epsilon .epsilon)
+  waterfall
 
 /--
 **Instruction**: Complete this theorem using **only** `rw`.
@@ -202,7 +210,11 @@ Hint: you might find a `Set` lemma from HW2 useful.
 -/
 theorem matchEpsilonT_semantic {α : Type} (r : RegEx α) :
     (matchEpsilonT r).ret = true ↔ [] ∈ r.MatchSet := by
-  sorry
+  rw [MatchSet]
+  rw [Set.mem_ofPred]
+  rw [matchEpsilonT_correct]
+  rw [matchEpsilon_eq_true_iff]
+
 
 /-!
   **Exercise 3: Lazy evaluation**
@@ -219,15 +231,28 @@ theorem matchEpsilonT_semantic {α : Type} (r : RegEx α) :
   You can read more about lazy evaluation here:
   https://en.wikipedia.org/wiki/Lazy_evaluation
  -/
-def matchEpsilonT' {α : Type} : RegEx α → TimeM ℕ Bool := sorry
+def matchEpsilonT' {α : Type} : RegEx α → TimeM ℕ Bool
+  | .epsilon => do ✓ return true
+  | .symbol _ => do ✓ return false
+  | .choice p q => do
+      ✓
+      let hp ← matchEpsilonT' p
+      if hp then return true
+      else matchEpsilonT' q
+  | .concat p q => do
+      ✓
+      let hp ← matchEpsilonT' p
+      if hp then matchEpsilonT' q
+      else return false
+  | .star _ => do ✓ return true
 
 theorem matchEpsilonT'_correct {α : Type} (r : RegEx α) :
     (matchEpsilonT' r).ret = r.matchEpsilon := by
-  sorry -- use `waterfall`
+  waterfall
 
 theorem matchEpsilonT'_cost {α : Type} (r : RegEx α) :
     (matchEpsilonT' r).time ≤ (matchEpsilonT r).time := by
-  sorry -- use `waterfall`
+  waterfall
 
 /-!
   **Task (b)**
@@ -244,7 +269,19 @@ theorem matchEpsilonT'_linear_speedup (n : ℕ) (b : Bool) :
       (r.Matches [] ↔ b) ∧
       (matchEpsilonT r).time = regexSize r ∧
       (matchEpsilonT' r).time = 2 := by
-  sorry
+  cases b
+  · induction n
+    · use .concat (.symbol 'a') .epsilon
+      waterfall
+    · obtain ⟨r, hr⟩ := a
+      use .concat (.symbol 'a') r
+      waterfall
+  · induction n
+    · use .choice .epsilon .epsilon
+      waterfall
+    · obtain ⟨r, hr⟩ := a
+      use .choice .epsilon r
+      waterfall
 
 end RegEx
 
@@ -286,7 +323,14 @@ def countT (q : ℕ) : List ℕ → TimeM ℕ ℕ
   it finds an element larger than `q`.
 -/
 
-def countSortedT (q : ℕ) : List ℕ → TimeM ℕ ℕ := sorry
+def countSortedT (q : ℕ) : List ℕ → TimeM ℕ ℕ
+  | .nil => return 0
+  | .cons x xs => do
+    ✓ let c := compareNat x q
+    if c = 1 then return 0
+    else
+      let n ← countSortedT q xs
+      return if c = 0 then n + 1 else n
 
 -- Hint: `List.pairwise_cons` might be useful for (b).
 
@@ -295,7 +339,10 @@ def countSortedT (q : ℕ) : List ℕ → TimeM ℕ ℕ := sorry
 -/
 theorem countSortedT_correct (q : ℕ) (xs : List ℕ) (hs : xs.Pairwise (· ≤ ·)) :
     (countSortedT q xs).ret = xs.count q := by
-  sorry
+  induction xs
+  · waterfall
+  · rw [List.pairwise_cons] at hs
+    waterfall
 
 /-!
   **Task (c)**: Prove that the optimized implementation is always at least
@@ -303,7 +350,9 @@ theorem countSortedT_correct (q : ℕ) (xs : List ℕ) (hs : xs.Pairwise (· ≤
 -/
 theorem countSortedT_time_le (q : ℕ) (xs : List ℕ) :
     (countSortedT q xs).time ≤ (countT q xs).time := by
-  sorry
+  induction xs
+  · simp [countT, countSortedT]
+  · waterfall
 
 theorem countSortedT_linear_speedup (n : ℕ) :
     ∃ xs : List ℕ,
@@ -311,7 +360,7 @@ theorem countSortedT_linear_speedup (n : ℕ) :
       xs.length = n + 1 ∧
       (countSortedT 0 xs).time = 1 ∧
       (countT 0 xs).time = n + 1 := by
-  sorry
-
+  use List.replicate (n + 1) 1
+  waterfall
 
 end HW7
