@@ -76,9 +76,55 @@ def optToFin {n : ℕ} (f : Option (Fin n)) : Fin (n + 1) :=
   | none => Fin.last n
   | some i => i.castSucc
 
-def greedyColor {n : ℕ} (g : Graph n) : Fin n → Fin (n + 1) :=
-  fun i => optToFin ((List.finRange (n)).find? (fun k => !(g.adj i).contains k))
+-- def greedyColor {n : ℕ} (g : Graph n) (coloring : List (Fin (n + 1))) : Fin n → Fin (n + 1) :=
+--   fun i => optToFin ((List.finRange (n)).find? (
+--     fun k => (g.adj i).filter (
+--       fun l =>
+--         match coloring.length ≤ k with
+--           | true => true
+--           | false => coloring.get l ≠ k
+--       )))
 -- forget to check if already colored, instead checking index as a mistake
+
+def Proper {n} (g : Graph n) (coloring : Fin n → ℕ) := ∀ u v, v ∈ g.adj u → coloring v ≠ coloring u
+def Δ (g : Graph n) := (Finset.univ.image (fun k => (g.adj k).length)).max
+
+
+def used_colors {n} (g : Graph n) (coloring : Array (Option ℕ)) (i : Fin n) : TimeM ℕ (List ℕ) := do
+  TimeM.tick (g.adj i).length -- the filter reads coloring (g.adj i).length times
+
+  return (g.adj i).filterMap (
+    fun k =>
+      coloring[k]?.join
+    )
+
+def mark_color (marks : Array Bool) (c : ℕ) : TimeM ℕ (Array Bool) := do
+  ✓ -- O(1) function
+  return marks.setIfInBounds c true
+
+def select_color (used : List ℕ) : TimeM ℕ ℕ := do
+  -- each mark_color is one tick; we count how many times foldl is executed, and mark_color is one comparison -> O(1)
+  TimeM.tick (used.length + 1) -- The array.replicate takes this much time
+  let marks ←  used.foldlM mark_color (Array.replicate (used.length + 1) false)
+  TimeM.tick (used.length + 1) -- this find will look at at most this many different k's; each of them processed in O(1)
+  let color := (List.range (used.length + 1)).find? (fun k => !marks.getD k true)
+
+  return color.getD used.length
+
+def color_vertex {n} (g : Graph n) (coloring : Array (Option ℕ)) (i : Fin n) : TimeM ℕ (Array (Option ℕ)) := do
+  let used ← used_colors g coloring i
+  let color ← select_color used
+
+  ✓ -- we write to the array
+  return coloring.set! i.val color
+
+def greedyColor {n} (g : Graph n) : TimeM ℕ (Fin n → ℕ) := do
+  TimeM.tick n -- Array.replicate costs this much
+  let coloring ← (List.finRange n).foldlM (color_vertex g) (Array.replicate n none)
+  return fun i => coloring[i]?.join.getD 0
+
+
+
 
 /-- The graph without vertices. -/
 def G1 : Graph 0 := .ofEdges []
@@ -96,7 +142,11 @@ def G4 : Graph 5 := .ofEdges [(0, 1), (1, 2), (2, 3), (3, 4), (4, 0)]
 greedy uses all `Δ + 1 = 3` colors. -/
 def G5 : Graph 6 := .ofEdges [(0, 3), (3, 4), (4, 1), (1, 2), (2, 5), (5, 0)]
 
+#eval greedyColor G1
 #eval greedyColor G2
+#eval greedyColor G3
+#eval greedyColor G4
+#eval greedyColor G5
 
 end Graph
 
