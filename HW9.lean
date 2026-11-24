@@ -321,7 +321,7 @@ lemma dfsT_nodup (G : DiGraph n)
 lemma mem_dfsT (G : DiGraph n)
     (stack visited : List (Fin n)) (v : Fin n)
     (h : v ∈ visited ∨ v ∈ stack) : v ∈ (dfsT G stack visited).ret := by
-  sorry
+  fun_induction dfsT <;> grind
 
 /-- When DFS stops, all neighbors of visited vertices are visited. -/
 lemma dfsT_closed (G : DiGraph n)
@@ -329,11 +329,15 @@ lemma dfsT_closed (G : DiGraph n)
     (h : ∀ u ∈ visited, ∀ w, G.Adj u w → w ∈ visited ∨ w ∈ stack) :
     ∀ u ∈ (dfsT G stack visited).ret, ∀ w, G.Adj u w →
       w ∈ (dfsT G stack visited).ret := by
-  sorry
+  fun_induction dfsT <;> waterfall
 
 theorem dfsT_correct (G : DiGraph n) (s v : Fin n) :
     v ∈ (dfsT G [s] []).ret ↔ Reach G s v := by
-  sorry
+  constructor
+  · have h := dfsT_reach G s [s] [] (by waterfall) (by waterfall)
+    grind
+  ·
+
 
 theorem dfsT_visits_once (G : DiGraph n)
     (s : Fin n) :
