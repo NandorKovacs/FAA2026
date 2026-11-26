@@ -188,7 +188,14 @@ theorem xgcdT_time (a b : ℕ) : (xgcdT a b).time ≤ 2 * Nat.log 2 b + 1 := by
   | _ b ih =>
     by_cases h : b = 0
     · grind [xgcdT]
-    · waterfall [xgcdT, xgcdT_time_step]
+    · rw [xgcdT_time_step a b h]
+      by_cases hr : a % b = 0
+      · simp [hr, xgcdT]
+      · rw [xgcdT_time_step b (a % b) hr]
+        have h2 : b % (a % b) * 2 < b := mod_mul_two_lt (by omega) (Nat.mod_lt a (by omega)).le
+        have ih := ih (b % (a % b)) (by omega) (a % b)
+        have hlog := log_add_one_le (by grind [Nat.mod_lt]) h2
+        omega
 
 
 
@@ -336,13 +343,17 @@ theorem dfsT_correct (G : DiGraph n) (s v : Fin n) :
   constructor
   · have h := dfsT_reach G s [s] [] (by waterfall) (by waterfall)
     grind
-  ·
-
+  · intro h
+    induction h with
+    | refl => grind [mem_dfsT]
+    | tail _ _ =>
+      grind [dfsT_closed]
 
 theorem dfsT_visits_once (G : DiGraph n)
     (s : Fin n) :
-    (dfsT G [s] []).ret.Nodup :=
-  sorry
+    (dfsT G [s] []).ret.Nodup := by
+    grind [dfsT_nodup]
+
 
 /-!
   **Task (b)**: Prove that DFS takes at most one time unit per edge (plus one for `s`).
@@ -359,11 +370,25 @@ lemma dfsT_time_le (G : DiGraph n)
     (stack visited : List (Fin n)) :
     (dfsT G stack visited).time ≤
       stack.length + ∑ v ∈ visited.toFinsetᶜ, (G.toList v).length := by
-  sorry
+  fun_induction dfsT G stack visited
+  · grind
+  · split
+    · grind
+    · simp_all
+      grw [ih1]
+      ring_nf
+      expose_names
+      have h_v : v ∈ visited_1.toFinsetᶜ := by
+        simp
+        assumption
+      grind [Finset.add_sum_erase]
 
 theorem dfsT_time (G : DiGraph n) (s : Fin n) :
     (dfsT G [s] []).time ≤ numEdges G + 1 := by
-  sorry
+  grw [dfsT_time_le]
+  unfold numEdges
+  simp_all
+  grind
 
 end DFS
 
